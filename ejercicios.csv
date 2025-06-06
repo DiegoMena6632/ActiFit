@@ -1,0 +1,37 @@
+nombre,tipo,equipamiento,duracion_minutos,calorias_estimadas
+Sentadillas,Fuerza,Ninguno,10,80
+Flexiones de pecho,Fuerza,Ninguno,10,90
+Plancha,Fuerza,Ninguno,5,30
+Caminata rápida,Cardio,Ninguno,20,120
+Saltar la cuerda,Cardio,Cuerda,15,200
+Bicicleta estática,Cardio,Bicicleta,30,250
+Burpees,Cardio,Ninguno,10,100
+Curl de bíceps,Fuerza,Mancuernas,10,70
+Press militar,Fuerza,Mancuernas,10,75
+Estiramiento de piernas,Flexibilidad,Ninguno,5,20
+Yoga básico,Flexibilidad,Colchoneta,20,50
+Puente glúteo,Fuerza,Colchoneta,10,60
+Mountain climbers,Cardio,Ninguno,8,90
+Remo con banda elástica,Fuerza,Banda elástica,12,85
+Zancadas,Fuerza,Ninguno,10,80
+Prensa de piernas,Fuerza,Prensa de piernas,12,120
+Press de banca,Fuerza,Press de banca,10,110
+Peso muerto,Fuerza,Barra olímpica,10,130
+Remo con barra,Fuerza,Barra olímpica,10,100
+Cardio en cinta,Cardio,Cinta de correr,20,220
+Elíptica,Cardio,Elíptica,25,230
+Abdominales,Fuerza,Ninguno,10,60
+Crunch con peso,Fuerza,Mancuernas,10,80
+Estiramiento de espalda,Flexibilidad,Ninguno,8,25
+Bicicleta en sala,Cardio,Bicicleta fija,25,210
+Fondos en paralelas,Fuerza,Paralelas,10,95
+Dominadas,Fuerza,Barra de dominadas,8,100
+Step aeróbico,Cardio,Escalón,20,180
+Jumping jacks,Cardio,Ninguno,10,85
+Pectoral contractor,Fuerza,Máquina de pectorales,10,100
+Extensión de piernas,Fuerza,Máquina de cuádriceps,12,105
+Curl de piernas,Fuerza,Máquina de isquiotibiales,12,95
+Elevación de talones,Fuerza,Ninguno,8,50
+Extensión de tríceps,Fuerza,Mancuernas,10,70
+Polea al pecho,Fuerza,Máquina de polea,12,110
+Flexión lateral de torso,Flexibilidad,Ninguno,5,15
