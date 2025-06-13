@@ -43,6 +43,49 @@ typedef struct {
     List* dias; // Lista de RutinaDia que componen la rutina semanal
 } RutinaSemanal;
 
+void LeerCVS(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo) {
+    
+    FILE *archivo = fopen("Ejercicios_formato_mostrar.csv", "r");
+    if (archivo == NULL) {
+        perror("Error al abrir el archivo");
+        return;
+    }
+    char **campos;
+    campos = leer_linea_csv(archivo, ',');
+
+    while(campos = leer_linea_csv(archivo, ',') != NULL) 
+    {
+        Ejercicio *ejercicio = ( Ejercicio*)malloc(sizeof(Ejercicio));
+        strncpy(ejercicio->nombre, campos[0], sizeof(ejercicio->nombre));
+        strncpy(ejercicio->tipo, campos[1], sizeof(ejercicio->tipo));
+
+        List *equipamiento_Necesario = split_string(campos[2], ";");
+        for (char *item = list_first(equipamiento_Necesario); item != NULL; item = list_next(equipamiento_Necesario))// Itera sobre los items
+        {
+                char *equipamiento = (char*)malloc(sizeof(char));
+                if (equipamiento == NULL) 
+                {
+                    perror("Error al asignar memoria para nuevo item");// Informa si no se puede reservar memoria
+                    continue;
+                }
+                strncpy(equipamiento, item, sizeof(char));
+                list_pushBack(ejercicio->Equipamiento_Necesario, equipamiento);
+            }
+        list_clean(equipamiento_Necesario);
+        free(equipamiento_Necesario);
+
+        ejercicio->duracion = atoi(campos[3]);
+        ejercicio->calorias = atoi(campos[4]);
+        strncpy(ejercicio->descripcion, campos[5], sizeof(ejercicio->descripcion));
+
+        map_insert(Ejercicios_PorTipo, ejercicio->tipo, ejercicio);
+        for(char *equip = list_first(ejercicio->Equipamiento_Necesario); equip != NULL; equip = list_next(ejercicio->Equipamiento_Necesario))
+        {
+            map_insert(Ejercicios_PorEquipamiento, equip, ejercicio);
+        }
+        free(campos);
+    }
+}
 void LeerDatosUsuario(Usuario* usuario) {
     printf("Ingrese su nombre de usuario: ");
     scanf("%s", usuario->username);
