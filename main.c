@@ -43,6 +43,10 @@ typedef struct {
     List* dias; // Lista de RutinaDia que componen la rutina semanal
 } RutinaSemanal;
 
+int is_equal_str(void *key1, void *key2) {
+  return strcmp((char *)key1, (char *)key2) == 0;
+}
+
 void LeerCVS(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo) {
     
     FILE *archivo = fopen("Ejercicios_formato_mostrar.csv", "r");
@@ -53,7 +57,7 @@ void LeerCVS(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo) {
     char **campos;
     campos = leer_linea_csv(archivo, ',');
 
-    while(campos = leer_linea_csv(archivo, ',') != NULL) 
+    while((campos = leer_linea_csv(archivo, ',')) != NULL) 
     {
         Ejercicio *ejercicio = ( Ejercicio*)malloc(sizeof(Ejercicio));
         strncpy(ejercicio->nombre, campos[0], sizeof(ejercicio->nombre));
@@ -115,8 +119,8 @@ void mostrarmenu()
 
 int main() {
     Usuario usuario;
-    Map* Ejercicios_PorEquipamiento = createMap();
-    Map* Ejercicios_PorTipo = createMap();
+    Map *Ejercicios_PorEquipamiento = map_create(is_equal_str);
+    Map *Ejercicios_PorTipo = map_create(is_equal_str);
 
     LeerCVS(Ejercicios_PorEquipamiento, Ejercicios_PorTipo);
 
@@ -125,8 +129,8 @@ int main() {
     puts("=============================================");
     puts("Por favor, ingresa tus datos personales para comenzar.");
 
-    LeerDatosUsuario(&usuario);
-    indicarEquipamiento(&usuario, Ejercicios_PorEquipamiento);// Esta falta hacerla
+    //LeerDatosUsuario(&usuario);
+    //indicarEquipamiento(&usuario, Ejercicios_PorEquipamiento);// Esta falta hacerla
     puts("Datos ingresados correctamente.");
     puts("=============================================");
 
