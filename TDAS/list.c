@@ -62,23 +62,25 @@ void list_pushFront(List *L, void *data) {
 }
 
 void list_pushBack(List *L, void *data) {
-  if (L == NULL) {
-    return; // Lista no inicializada
-  }
-  Node *newNode = (Node *)malloc(sizeof(Node));
-  if (newNode == NULL) {
-    return; // Fallo en la asignación de memoria
-  }
-  newNode->data = data;
-  newNode->next = NULL;
-  if (L->tail == NULL) { // Si la lista está vacía
-    L->head = newNode;
-    L->tail = newNode;
-  } else {
-    L->tail->next = newNode;
-    L->tail = newNode;
-  }
-  L->size++;
+    if (L == NULL) {
+        return; // Lista no inicializada
+    }
+    Node *newNode = (Node *)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        perror("Error al asignar memoria para un nuevo nodo");
+        return; // Fallo en la asignación de memoria
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+
+    if (L->tail == NULL) { // Si la lista está vacía
+        L->head = newNode;
+        L->tail = newNode;
+    } else {
+        L->tail->next = newNode;
+        L->tail = newNode;
+    }
+    L->size++;
 }
 
 void list_pushCurrent(List *L, void *data) {

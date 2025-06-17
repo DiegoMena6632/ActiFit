@@ -71,71 +71,98 @@ bool not_in(char *equip, List* Equipamiento_Total)
 // Nombre,Tipo,Equipamiento_Necesario,Duracion,Calorias,Descripcion
 // Equipamiento_Necesario es una lista separada por punto y coma (;)
 //----------------------------------------------------------------------
-void LeerCVS(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, List* Equipamiento_Total) {
-    
-    FILE *archivo = fopen("Ejercicios_formato_mostrar.csv", "r");// Abre el archivo CSV en modo lectura
+
+void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, List* Equipamiento_Total) {
+    FILE *archivo = fopen("ejercicios_formato_mostrar.csv", "r"); // Abre el archivo CSV en modo lectura
     if (archivo == NULL) {
-        perror("Error al abrir el archivo");
+        perror("Error al abrir el archivo ejercicios_formato_mostrar.csv");
         return;
     }
-    char **campos;// Array para almacenar los campos de cada línea del CSV
-    campos = leer_linea_csv(archivo, ',');// Lee la primera línea del CSV (encabezados)
 
-    while((campos = leer_linea_csv(archivo, ',')) != NULL)//Lee cada linea del CVS
-    {
-        Ejercicio *ejercicio = ( Ejercicio*)malloc(sizeof(Ejercicio));// Reserva memoria para un nuevo ejercicio
-        strncpy(ejercicio->nombre, campos[0], sizeof(ejercicio->nombre));// Asigna el nombre del ejercicio
-        strncpy(ejercicio->tipo, campos[1], sizeof(ejercicio->tipo));// Asigna el tipo del ejercicio
+    char **campos; // Array para almacenar los campos de cada línea del CSV
+    campos = leer_linea_csv(archivo, ','); // Lee la primera línea del CSV (encabezados)
 
-        List *equipamiento_Necesario = split_string(campos[2], ";");// Divide los equipamientos necesarios por el delimitador ";"
-        for (char *item = list_first(equipamiento_Necesario); item != NULL; item = list_next(equipamiento_Necesario))// Itera sobre los equipamientos necesarios
-        {
-            char *equipamiento = (char*)malloc(sizeof(char));// Reserva memoria para un nuevo equipamiento
-            if (equipamiento == NULL) 
-            {
-                perror("Error al asignar memoria para nuevo item");// Informa si no se puede reservar memoria
+    while ((campos = leer_linea_csv(archivo, ',')) != NULL) { // Lee cada línea del CSV
+        Ejercicio *ejercicio = (Ejercicio *)malloc(sizeof(Ejercicio)); // Reserva memoria para un nuevo ejercicio
+        if (ejercicio == NULL) {
+            perror("Error al asignar memoria para un ejercicio");
+            continue;
+        }
+
+        // Asigna los valores a la estructura Ejercicio
+        strncpy(ejercicio->nombre, campos[0], sizeof(ejercicio->nombre));
+        strncpy(ejercicio->tipo, campos[1], sizeof(ejercicio->tipo));
+        ejercicio->duracion = atoi(campos[3]);
+        ejercicio->calorias = atoi(campos[4]);
+        strncpy(ejercicio->descripcion, campos[5], sizeof(ejercicio->descripcion));
+
+        // Divide los equipamientos necesarios por el delimitador ";"
+        List *equipamiento_Necesario = split_string(campos[2], ";");
+        ejercicio->Equipamiento_Necesario = list_create();
+
+        for (char *item = list_first(equipamiento_Necesario); item != NULL; item = list_next(equipamiento_Necesario)) {
+            char *equipamiento = strdup(item); // Duplica el string del equipamiento
+            if (equipamiento == NULL) {
+                perror("Error al asignar memoria para un equipamiento");
                 continue;
             }
-            strncpy(equipamiento, item, sizeof(char));// Asigna el nombre del equipamiento
-            list_pushBack(ejercicio->Equipamiento_Necesario, equipamiento);// Agrega el equipamiento a la lista de equipamiento necesario del ejercicio
+            list_pushBack(ejercicio->Equipamiento_Necesario, equipamiento); // Agrega el equipamiento a la lista del ejercicio
         }
-        list_clean(equipamiento_Necesario);// Limpia la lista de equipamiento necesario
-        free(equipamiento_Necesario);// Libera la memoria de la lista de equipamiento necesario
 
-        ejercicio->duracion = atoi(campos[3]);// Asigna la duración del ejercicio en minutos
-        ejercicio->calorias = atoi(campos[4]);// Asigna las calorías quemadas por el ejercicio
-        strncpy(ejercicio->descripcion, campos[5], sizeof(ejercicio->descripcion));// Asigna la descripción del ejercicio
+        // Inserta el ejercicio en el mapa por tipo
+        map_insert(Ejercicios_PorTipo, ejercicio->tipo, ejercicio);
 
-        map_insert(Ejercicios_PorTipo, ejercicio->tipo, ejercicio);// Inserta el ejercicio en el mapa de ejercicios por tipo, con la clave siendo el tipo del ejercicio
-        for(char *equip = list_first(ejercicio->Equipamiento_Necesario); equip != NULL; equip = list_next(ejercicio->Equipamiento_Necesario))// Itera sobre los equipamientos necesarios del ejercicio
-        {
-            map_insert(Ejercicios_PorEquipamiento, equip, ejercicio);// Inserta el ejercicio en el mapa de ejercicios por equipamiento, con la clave siendo el equipamiento necesario
-            if(not_in(equip, Equipamiento_Total)) // Verifica si el equipamiento no está en la lista de equipamiento total
-            {
-                list_pushBack(Equipamiento_Total, equip);// Agrega el equipamiento a la lista de equipamiento total
+        // Inserta el ejercicio en el mapa por equipamiento y actualiza Equipamiento_Total
+        for (char *equip = list_first(ejercicio->Equipamiento_Necesario); equip != NULL; equip = list_next(ejercicio->Equipamiento_Necesario)) {
+            map_insert(Ejercicios_PorEquipamiento, equip, ejercicio);
+            if (not_in(equip, Equipamiento_Total)) {
+                list_pushBack(Equipamiento_Total, strdup(equip)); // Agrega el equipamiento a la lista total
             }
         }
-        free(campos);
+
+        list_clean(equipamiento_Necesario); // Limpia la lista temporal de equipamiento necesario
+        free(equipamiento_Necesario); // Libera la memoria de la lista temporal
+        free(campos); // Libera la memoria de los campos
     }
-    fclose(archivo);// Cierra el archivo después de leer todas las líneas
-    puts("Ejercicios cargados correctamente desde el archivo CSV.");
+
+    fclose(archivo); // Cierra el archivo después de leer todas las líneas
+    puts("Ejercicios cargados correctamente desde el archivo ejercicios_formato_mostrar.csv.");
 }
 
 //---------------------------------------------------------------------
 // Esta función le pide al usuario sus datos personales y calcula su IMC.
 // Se espera que el usuario ingrese su nombre de usuario, género, peso y altura.
 //---------------------------------------------------------------------
-void LeerDatosUsuario(Usuario* usuario) 
-{
+void LeerDatosUsuario(Usuario* usuario) {
     printf("Ingrese su nombre de usuario: ");
     scanf("%s", usuario->username);
-    printf("Ingrese su género (Masculino/Femenino): ");
-    scanf("%s", usuario->genero);
+
+    int opcion_genero;
+    do {
+        puts("Ingrese su género:");
+        puts("1. Masculino");
+        puts("2. Femenino");
+        printf("Seleccione una opción: ");
+        scanf("%d", &opcion_genero);
+
+        switch (opcion_genero) {
+            case 1:
+                strcpy(usuario->genero, "Masculino");
+                break;
+            case 2:
+                strcpy(usuario->genero, "Femenino");
+                break;
+            default:
+                puts("Opción no válida. Por favor, intente de nuevo.");
+        }
+    } while (opcion_genero < 1 || opcion_genero > 2);
+
     printf("Ingrese su peso en kg: ");
     scanf("%d", &usuario->peso);
+
     printf("Ingrese su altura en cm: ");
     scanf("%d", &usuario->altura);
-    
+
     // Calcular IMC
     usuario->IMC = usuario->peso / ((usuario->altura / 100.0) * (usuario->altura / 100.0));
 
@@ -174,7 +201,7 @@ int main() {
     Map *Ejercicios_PorTipo = map_create(is_equal_str);
     List *Equipamiento_Total = list_create(); // Lista para almacenar el equipamiento total disponible
 
-    LeerCVS(Ejercicios_PorEquipamiento, Ejercicios_PorTipo, Equipamiento_Total); // Cargar ejercicios desde el archivo CSV
+    LeerEjercicios(Ejercicios_PorEquipamiento, Ejercicios_PorTipo, Equipamiento_Total); // Carga los ejercicios desde el archivo CSV
 
     puts("=============================================");
     puts("Bienvenido a ActiFit, el programa de entrenamiento personalizado.");
@@ -206,10 +233,10 @@ int main() {
                 // VerResumenRutina(&usuario); // Esta funcion deberia mostrar un resumen de la rutina semanal del usuario
                 break;
             case 5:
-                puts("Saliendo del programa. ¡Hasta luego!");
+                puts("Saliendo de la aplicacion. ¡Hasta luego!");
                 break;
             default:
-                puts("Opción no válida. Por favor, intente de nuevo.");
+                puts("Opción no valida. Por favor, intente de nuevo.");
         }
     } while (opcion != 5);
     return 0;
