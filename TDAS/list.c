@@ -28,6 +28,22 @@ List *list_create() {
   return newList;
 }
 
+/*void *list_first(List *L) {
+  if (L == NULL || L->head == NULL) {
+    return NULL; // Lista vacía o no inicializada
+  }
+  L->current = L->head;
+  return L->current->data;
+}
+
+void *list_next(List *L) {
+  if (L == NULL || L->current == NULL || L->current->next == NULL) {
+    return NULL; // Lista vacía, no inicializada o no hay más elementos
+  }
+  L->current = L->current->next;
+  return L->current->data;
+}*/
+
 void *list_first(List *L) {
   if (L == NULL || L->head == NULL) {
     return NULL; // Lista vacía o no inicializada
@@ -163,7 +179,7 @@ int list_size(List *L){
     return L->size;
 }
 
-void *list_popCurrent(List *L) {
+/*void *list_popCurrent(List *L) {
   if (L == NULL || L->current == NULL) {
     return NULL; // Lista no inicializada o current no definido
   }
@@ -184,7 +200,53 @@ void *list_popCurrent(List *L) {
   L->current = temp->next;
   L->size--;
   return data;
+}*/
+
+void *list_popCurrent(List *L) {
+  if (L == NULL || L->current == NULL) {
+    return NULL; // Lista no inicializada o current no definido
+  }
+  if (L->current == L->head) {
+    return list_popFront(L); // Si current es el primer nodo
+  }
+
+  Node *prev = L->head;
+  while (prev != NULL && prev->next != L->current) {
+    prev = prev->next;
+  }
+
+  if (prev == NULL) {
+    return NULL; // current no pertenece a la lista
+  }
+
+  prev->next = L->current->next;
+  if (L->current == L->tail) {
+    L->tail = prev; // Actualizar tail si se elimina el último elemento
+  }
+
+  void *data = L->current->data;
+  free(L->current);
+  L->current = prev->next; // Actualizar current al siguiente nodo
+  L->size--;
+  return data;
 }
+
+/*void list_clean(List *L) {
+  if (L == NULL) {
+    return; // Lista no inicializada
+  }
+  Node *current = L->head;
+  Node *next;
+  while (current != NULL) {
+    next = current->next;
+    free(current);
+    current = next;
+  }
+  L->head = NULL;
+  L->tail = NULL;
+  L->current = NULL;
+  L->size = 0;
+}*/
 
 void list_clean(List *L) {
   if (L == NULL) {
@@ -194,6 +256,7 @@ void list_clean(List *L) {
   Node *next;
   while (current != NULL) {
     next = current->next;
+    free(current->data); // Liberar los datos si son punteros dinámicos
     free(current);
     current = next;
   }

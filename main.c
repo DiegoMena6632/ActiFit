@@ -169,10 +169,106 @@ void LeerDatosUsuario(Usuario* usuario) {
     printf("Tu IMC es: %d\n", usuario->IMC);
 }
 
-void indicarEquipamiento(Usuario* usuario, List* Equipamiento) 
-{
-    //Falta terminarla
-    return;
+void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
+    if (Equipamiento_Usuario == NULL) {
+        puts("Error: La lista de equipamiento no está inicializada.");
+        return;
+    }
+
+    int opcion;
+    do {
+        puts("Seleccione una opción:");
+        puts("1. Agregar equipamiento");
+        puts("2. Eliminar equipamiento");
+        puts("3. Volver al menú principal");
+        printf("Ingrese su opción: ");
+        scanf("%d", &opcion);
+
+        switch (opcion) {
+            case 1: {
+                // Agregar equipamiento
+                puts("Seleccione el equipamiento que desea agregar:");
+                puts("1. Mancuernas");
+                puts("2. Banda elástica");
+                puts("3. Banco");
+                int opcion_equipamiento;
+                printf("Ingrese su opción: ");
+                scanf("%d", &opcion_equipamiento);
+
+                char* equipamiento = NULL;
+                switch (opcion_equipamiento) {
+                    case 1:
+                        equipamiento = "Mancuernas";
+                        break;
+                    case 2:
+                        equipamiento = "Banda elástica";
+                        break;
+                    case 3:
+                        equipamiento = "Banco";
+                        break;
+                    default:
+                        puts("Opción no válida.");
+                        continue;
+                }
+
+                // Verificar si ya posee el equipamiento
+                int ya_existe = 0;
+                for (char* equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
+                    if (strcmp(equip, equipamiento) == 0) {
+                        ya_existe = 1;
+                        break;
+                    }
+                }
+
+                if (!ya_existe) {
+                    list_pushBack(Equipamiento_Usuario, strdup(equipamiento));
+                    printf("Equipamiento '%s' agregado correctamente.\n", equipamiento);
+                } else {
+                    printf("Ya posee el equipamiento '%s'.\n", equipamiento);
+                }
+                break;
+            }
+            case 2: {
+                // Eliminar equipamiento
+                if (list_size(Equipamiento_Usuario) == 0) {
+                    puts("No tiene equipamiento para eliminar.");
+                    break;
+                }
+
+                puts("Seleccione el equipamiento que desea eliminar:");
+                int index = 1;
+                for (char* equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
+                    printf("%d. %s\n", index++, equip);
+                }
+
+                int opcion_eliminar;
+                printf("Ingrese el número del equipamiento a eliminar: ");
+                scanf("%d", &opcion_eliminar);
+
+                if (opcion_eliminar < 1 || opcion_eliminar > list_size(Equipamiento_Usuario)) {
+                    puts("Opción no válida.");
+                    break;
+                }
+
+                // Eliminar el equipamiento seleccionado
+                int current_index = 1;
+                for (char* equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
+                    if (current_index == opcion_eliminar) {
+                        printf("Equipamiento '%s' eliminado correctamente.\n", equip);
+                        free(list_popCurrent(Equipamiento_Usuario)); // Eliminar y liberar memoria
+                        break;
+                    }
+                    current_index++;
+                }
+                break;
+            }
+            case 3:
+                puts("Volviendo al menú principal...");
+                break;
+            default:
+                puts("Opción no válida. Intente nuevamente.");
+        }
+    } while (opcion != 3);
 }
 
 //---------------------------------------------------------------------
@@ -187,7 +283,8 @@ void mostrarmenu()
     puts("2. Mostrar Rutina");
     puts("3. Modificar Rutina");
     puts("4. Ver resumen de rutina semanal");
-    puts("5. Salir");
+    puts("5. Gestionar equipamiento");
+    puts("6. Salir");
     puts("=============================================");
 }
 
@@ -200,6 +297,7 @@ int main() {
     Map *Ejercicios_PorEquipamiento = map_create(is_equal_str);
     Map *Ejercicios_PorTipo = map_create(is_equal_str);
     List *Equipamiento_Total = list_create(); // Lista para almacenar el equipamiento total disponible
+    List *Equipamiento_Usuario = list_create(); // Lista para almacenar el equipamiento del usuario
 
     LeerEjercicios(Ejercicios_PorEquipamiento, Ejercicios_PorTipo, Equipamiento_Total); // Carga los ejercicios desde el archivo CSV
 
@@ -209,7 +307,6 @@ int main() {
     puts("Por favor, ingresa tus datos personales para comenzar.");
 
     LeerDatosUsuario(&usuario);
-    indicarEquipamiento(&usuario, Equipamiento_Total);// Esta falta hacerla
     puts("Datos ingresados correctamente.");
     puts("=============================================");
 
@@ -233,11 +330,18 @@ int main() {
                 // VerResumenRutina(&usuario); // Esta funcion deberia mostrar un resumen de la rutina semanal del usuario
                 break;
             case 5:
+                gestionarEquipamiento(&usuario, Equipamiento_Usuario); // Gestionar el equipamiento del usuario
+                puts("Equipamiento del usuario:");
+                for (char *equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
+                    printf("- %s\n", equip);
+                }
+                break;
+            case 6:
                 puts("Saliendo de la aplicacion. ¡Hasta luego!");
                 break;
             default:
                 puts("Opción no valida. Por favor, intente de nuevo.");
         }
-    } while (opcion != 5);
+    } while (opcion != 6);
     return 0;
 }
