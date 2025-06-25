@@ -129,6 +129,10 @@ void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, Li
     puts("Ejercicios cargados correctamente desde el archivo ejercicios_formato_mostrar.csv.");
 }
 
+
+
+
+
 //---------------------------------------------------------------------
 // Esta función le pide al usuario sus datos personales y calcula su IMC.
 // Se espera que el usuario ingrese su nombre de usuario, género, peso y altura.
@@ -167,6 +171,100 @@ void LeerDatosUsuario(Usuario* usuario) {
     usuario->IMC = usuario->peso / ((usuario->altura / 100.0) * (usuario->altura / 100.0));
 
     printf("Tu IMC es: %d\n", usuario->IMC);
+}
+
+int usuario_tiene_equipamiento(List* Equipamiento_Usuario, List* Equipamiento_Necesario) {
+    // Si el ejercicio no requiere equipamiento, siempre puede hacerlo
+    if (list_first(Equipamiento_Necesario) == NULL) return 1;
+
+    int tiene_todo = 1;
+    for (char* equip = list_first(Equipamiento_Necesario); equip != NULL; equip = list_next(Equipamiento_Necesario)) {
+        int encontrado = 0;
+        for (char* user_equip = list_first(Equipamiento_Usuario); user_equip != NULL; user_equip = list_next(Equipamiento_Usuario)) {
+            if (strcmp(equip, "Ninguno") == 0 || strcmp(equip, user_equip) == 0) {
+                encontrado = 1;
+                break;
+            }
+        }
+        if (!encontrado) {
+            tiene_todo = 0;
+            break;
+        }
+    }
+    return tiene_todo;
+}
+
+void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario) {
+    char preferencia[32];
+    printf("¿Qué tipo de ejercicios prefieres para tu rutina? (Cardio/Fuerza/Core): ");
+    scanf("%s", preferencia);
+
+    int ejercicios_diarios;
+    if (usuario->IMC < 18.5)
+        ejercicios_diarios = 2;
+    else if (usuario->IMC < 25)
+        ejercicios_diarios = 3;
+    else if (usuario->IMC < 30)
+        ejercicios_diarios = 4;
+    else
+        ejercicios_diarios = 5;
+
+    const char* dias_semana[] = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    usuario->Rutina_Usuario = map_create(is_equal_str);
+
+    for (int i = 0; i < 7; i++) {
+        RutinaDia* dia = malloc(sizeof(RutinaDia));
+        strcpy(dia->dia, dias_semana[i]);
+        dia->ejercicios = list_create();
+
+        int count = 0;
+        // 1. Prioriza ejercicios del tipo preferido
+        MapPair* pair = map_search(Ejercicios_PorTipo, preferencia);
+        if (pair) {
+            for (Ejercicio* ejercicio = list_first((List*)pair->value); ejercicio != NULL && count < ejercicios_diarios; ejercicio = list_next((List*)pair->value)) {
+                if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) {
+                    list_pushBack(dia->ejercicios, ejercicio);
+                    count++;
+                }
+            }
+        }
+        // 2. Si faltan ejercicios, busca en otros tipos
+        if (count < ejercicios_diarios) {
+            for (MapPair* p = map_first(Ejercicios_PorTipo); p != NULL && count < ejercicios_diarios; p = map_next(Ejercicios_PorTipo)) {
+                if (strcmp((char*)p->key, preferencia) == 0) continue;
+                for (Ejercicio* ejercicio = list_first((List*)p->value); ejercicio != NULL && count < ejercicios_diarios; ejercicio = list_next((List*)p->value)) {
+                    if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) {
+                        list_pushBack(dia->ejercicios, ejercicio);
+                        count++;
+                    }
+                }
+            }
+        }
+        map_insert(usuario->Rutina_Usuario, dia->dia, dia);
+    }
+    puts("¡Rutina semanal generada exitosamente!");
+}
+
+void MostrarRutina(Usuario* usuario) {
+    if (usuario->Rutina_Usuario == NULL) {
+        puts("No tienes una rutina generada aún.");
+        return;
+    }
+
+    puts("===== Rutina semanal =====");
+    const char* dias_semana[] = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    for (int i = 0; i < 7; i++) {
+        MapPair* pair = map_search(usuario->Rutina_Usuario, (void*)dias_semana[i]);
+        if (!pair || !pair->value) continue;
+        RutinaDia* dia = (RutinaDia*)pair->value;
+        printf("\n%s:\n", dias_semana[i]);
+        int num = 1;
+        for (Ejercicio* ejercicio = list_first(dia->ejercicios); ejercicio != NULL; ejercicio = list_next(dia->ejercicios)) {
+            printf("  %d. %s (%d min)\n     %s\n", num++, ejercicio->nombre, ejercicio->duracion, ejercicio->descripcion);
+        }
+        if (num == 1) printf("  (Sin ejercicios asignados)\n");
+    }
+    puts("==========================");
 }
 
 void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
@@ -318,10 +416,12 @@ int main() {
 
         switch (opcion) {
             case 1:
-                //GenerarRutina(); en eta misma deveria ir la opcion de elegir el tipo
+                GenerarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario); // Generar rutina de entrenamiento
+                puts("Rutina generada. Puedes ver o modificar tu rutina en las opciones.");
+
                 break;
             case 2:
-                //VerRutina(&usuario); // Esta funcion deberia mostrar la rutina del usuario
+                MostrarRutina(&usuario); // Mostrar la rutina generada
                 break;
             case 3:
                 // ModificarRutina(&usuario, Ejercicios_PorEquipamiento, Ejercicios_PorTipo); // Esta funcion deberia permitir modificar la rutina del usuario
@@ -343,5 +443,6 @@ int main() {
                 puts("Opción no valida. Por favor, intente de nuevo.");
         }
     } while (opcion != 6);
+    
     return 0;
 }
