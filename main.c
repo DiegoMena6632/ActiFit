@@ -234,7 +234,9 @@ bool list_contains_Ejercicio(List* Ejercicios_asignados, Ejercicio* ejercicio) {
 
 void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario, List* Ejercicios_asignados) {
     char preferencia[32];
+
     printf("¿Que tipo de ejercicios prefieres para tu rutina? (Cardio/Fuerza/Core): ");
+    puts("Recuerda que tienes que escribir exactamente el tipo de ejercicio preferido, como aparece en la pantalla.");
     scanf("%s", preferencia);
 
     int ejercicios_diarios;
@@ -290,6 +292,7 @@ void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento
         map_insert(usuario->Rutina_Usuario, Dia->dia, Dia);
     }
     puts("¡Rutina semanal generada exitosamente!");
+
 }
 
 void MostrarRutina(Usuario* usuario) {
@@ -388,6 +391,7 @@ void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
 
                 int opcion_eliminar;
                 printf("Ingrese el número del equipamiento a eliminar: ");
+                puts("AVISO : NO ELIMINAR EL EQUIPAMIENTO 'Ninguno'!");
                 scanf("%d", &opcion_eliminar);
 
                 if (opcion_eliminar < 1 || opcion_eliminar > list_size(Equipamiento_Usuario)) {
@@ -424,11 +428,11 @@ void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
 void mostrarmenu()
 {
     puts("=============================================");
-    puts("1. Generar rutina de entrenamiento");
-    puts("2. Mostrar Rutina");
-    puts("3. Modificar Rutina");
-    puts("4. Ver resumen de rutina semanal");
-    puts("5. Gestionar equipamiento");
+    puts("1. Gestionar equipamiento");
+    puts("2. Generar rutina de entrenamiento");
+    puts("3. Mostrar Rutina");
+    puts("4. Modificar Rutina");
+    puts("5. Ver resumen de rutina semanal");
     puts("6. Salir");
     puts("=============================================");
 }
@@ -438,6 +442,7 @@ void mostrarmenu()
 //==========================================================================
 
 int main() {
+    int bandera = 0; // Bandera para controlar el flujo del programa
     Usuario usuario;
     Map *Ejercicios_PorEquipamiento = map_create(is_equal_str);
     Map *Ejercicios_PorTipo = map_create(is_equal_str);
@@ -465,26 +470,35 @@ int main() {
 
         switch (opcion) {
             case 1:
-                list_clean(Ejercicios_asignados); // Limpia la lista de ejercicios asignados
-                GenerarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario, Ejercicios_asignados); // Generar rutina de entrenamiento
-                puts("Rutina generada. Puedes ver o modificar tu rutina en las opciones.");
-
-                break;
-            case 2:
-                MostrarRutina(&usuario); // Mostrar la rutina generada
-                break;
-            case 3:
-                // ModificarRutina(&usuario, Ejercicios_PorEquipamiento, Ejercicios_PorTipo); // Esta funcion deberia permitir modificar la rutina del usuario
-                break;
-            case 4:
-                // VerResumenRutina(&usuario); // Esta funcion deberia mostrar un resumen de la rutina semanal del usuario
-                break;
-            case 5:
                 gestionarEquipamiento(&usuario, Equipamiento_Usuario); // Gestionar el equipamiento del usuario
                 puts("Equipamiento del usuario:");
                 for (char *equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
                     printf("- %s\n", equip);
                 }
+                break;
+            case 2:
+                if (bandera == 0) 
+                {
+                    puts("¡Genial! Vamos a generar tu rutina de entrenamiento.");
+                    list_clean(Ejercicios_asignados); // Limpia la lista de ejercicios asignados
+                    GenerarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario, Ejercicios_asignados); // Generar rutina de entrenamiento
+                    puts("Rutina generada. Puedes ver o modificar tu rutina en las opciones.");
+                    bandera = 1; // Cambia la bandera para indicar que ya se ha generado una rutina
+                    break;
+                } 
+                else 
+                {
+                    puts("Ya has generado una rutina. Si deseas cambiarla, por favor, modifícala en las opciones.");
+                    break;
+                }
+            case 3:
+                MostrarRutina(&usuario); // Mostrar la rutina generada
+                break;
+            case 4:
+                // ModificarRutina(&usuario, Ejercicios_PorEquipamiento, Ejercicios_PorTipo); // Esta funcion deberia permitir modificar la rutina del usuario
+                break;
+            case 5:
+                // VerResumenRutina(&usuario); // Esta funcion deberia mostrar un resumen de la rutina semanal del usuario
                 break;
             case 6:
                 puts("Saliendo de la aplicacion. ¡Hasta luego!");
