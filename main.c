@@ -29,7 +29,7 @@ typedef struct {
     char nombre[50];
     char tipo[20]; // Ejemplo: "Cardio", "Fuerza", etc.
     int duracion; // Duración en minutos
-    char descripcion[200];
+    char descripcion[500];
     int calorias;
     List* Equipamiento_Necesario; // Lista de equipamiento necesario para el ejercicio
 } Ejercicio;
@@ -72,7 +72,8 @@ bool not_in(char *equip, List* Equipamiento_Total)
 // Equipamiento_Necesario es una lista separada por punto y coma (;)
 //----------------------------------------------------------------------
 
-void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, List* Equipamiento_Total) {
+void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, List* Equipamiento_Total)
+{
     FILE *archivo = fopen("ejercicios_formato_mostrar.csv", "r"); // Abre el archivo CSV en modo lectura
     if (archivo == NULL) {
         perror("Error al abrir el archivo ejercicios_formato_mostrar.csv");
@@ -82,7 +83,8 @@ void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, Li
     char **campos; // Array para almacenar los campos de cada línea del CSV
     campos = leer_linea_csv(archivo, ','); // Lee la primera línea del CSV (encabezados)
 
-    while ((campos = leer_linea_csv(archivo, ',')) != NULL) { // Lee cada línea del CSV
+    while ((campos = leer_linea_csv(archivo, ',')) != NULL) 
+    { // Lee cada línea del CSV
         Ejercicio *ejercicio = (Ejercicio *)malloc(sizeof(Ejercicio)); // Reserva memoria para un nuevo ejercicio
         if (ejercicio == NULL) {
             perror("Error al asignar memoria para un ejercicio");
@@ -100,9 +102,11 @@ void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, Li
         List *equipamiento_Necesario = split_string(campos[2], ";");
         ejercicio->Equipamiento_Necesario = list_create();
 
-        for (char *item = list_first(equipamiento_Necesario); item != NULL; item = list_next(equipamiento_Necesario)) {
+        for (char *item = list_first(equipamiento_Necesario); item != NULL; item = list_next(equipamiento_Necesario)) 
+        {
             char *equipamiento = strdup(item); // Duplica el string del equipamiento
-            if (equipamiento == NULL) {
+            if (equipamiento == NULL)
+            {
                 perror("Error al asignar memoria para un equipamiento");
                 continue;
             }
@@ -110,12 +114,37 @@ void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, Li
         }
 
         // Inserta el ejercicio en el mapa por tipo
-        map_insert(Ejercicios_PorTipo, ejercicio->tipo, ejercicio);
+        List* lista_tipo = NULL;
+        MapPair* tipo_pair = map_search(Ejercicios_PorTipo, ejercicio->tipo);
+        if (tipo_pair) 
+        {
+            lista_tipo = (List*)tipo_pair->value;
+        } 
+        else 
+        {
+            lista_tipo = list_create();
+            map_insert(Ejercicios_PorTipo, ejercicio->tipo, lista_tipo);
+        }   
+        list_pushBack(lista_tipo, ejercicio);
 
         // Inserta el ejercicio en el mapa por equipamiento y actualiza Equipamiento_Total
-        for (char *equip = list_first(ejercicio->Equipamiento_Necesario); equip != NULL; equip = list_next(ejercicio->Equipamiento_Necesario)) {
-            map_insert(Ejercicios_PorEquipamiento, equip, ejercicio);
-            if (not_in(equip, Equipamiento_Total)) {
+        for (char *equip = list_first(ejercicio->Equipamiento_Necesario); equip != NULL; equip = list_next(ejercicio->Equipamiento_Necesario))
+        {
+            // Buscar si ya hay una lista de ejercicios para ese equipamiento
+            List* lista_equip = NULL;
+            MapPair* equip_pair = map_search(Ejercicios_PorEquipamiento, equip);
+            if (equip_pair) 
+            {
+                lista_equip = (List*)equip_pair->value;
+            } else 
+            {
+                lista_equip = list_create();
+                map_insert(Ejercicios_PorEquipamiento, equip, lista_equip);
+            }
+            list_pushBack(lista_equip, ejercicio);
+
+            if (not_in(equip, Equipamiento_Total)) 
+            {
                 list_pushBack(Equipamiento_Total, strdup(equip)); // Agrega el equipamiento a la lista total
             }
         }
@@ -139,7 +168,7 @@ void LeerEjercicios(Map* Ejercicios_PorEquipamiento, Map* Ejercicios_PorTipo, Li
 //---------------------------------------------------------------------
 void LeerDatosUsuario(Usuario* usuario) {
     printf("Ingrese su nombre de usuario: ");
-    scanf("%s", usuario->username);
+    scanf(" %[^\n]", usuario->username);
 
     int opcion_genero;
     do {
@@ -194,9 +223,18 @@ int usuario_tiene_equipamiento(List* Equipamiento_Usuario, List* Equipamiento_Ne
     return tiene_todo;
 }
 
-void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario) {
+bool list_contains_Ejercicio(List* Ejercicios_asignados, Ejercicio* ejercicio) {
+    for (Ejercicio* e = list_first(Ejercicios_asignados); e != NULL; e = list_next(Ejercicios_asignados)) {
+        if (strcmp(e->nombre, ejercicio->nombre) == 0) {
+            return true; // El ejercicio ya está en la lista
+        }
+    }
+    return false; // El ejercicio no está en la lista
+}
+
+void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario, List* Ejercicios_asignados) {
     char preferencia[32];
-    printf("¿Qué tipo de ejercicios prefieres para tu rutina? (Cardio/Fuerza/Core): ");
+    printf("¿Que tipo de ejercicios prefieres para tu rutina? (Cardio/Fuerza/Core): ");
     scanf("%s", preferencia);
 
     int ejercicios_diarios;
@@ -209,22 +247,27 @@ void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento
     else
         ejercicios_diarios = 5;
 
-    const char* dias_semana[] = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    const char* dias_semana[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
     usuario->Rutina_Usuario = map_create(is_equal_str);
 
     for (int i = 0; i < 7; i++) {
-        RutinaDia* dia = malloc(sizeof(RutinaDia));
-        strcpy(dia->dia, dias_semana[i]);
-        dia->ejercicios = list_create();
+        RutinaDia* Dia = malloc(sizeof(RutinaDia));
+        strcpy(Dia->dia, dias_semana[i]);
+        Dia->ejercicios = list_create();
 
         int count = 0;
         // 1. Prioriza ejercicios del tipo preferido
         MapPair* pair = map_search(Ejercicios_PorTipo, preferencia);
         if (pair) {
             for (Ejercicio* ejercicio = list_first((List*)pair->value); ejercicio != NULL && count < ejercicios_diarios; ejercicio = list_next((List*)pair->value)) {
-                if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) {
-                    list_pushBack(dia->ejercicios, ejercicio);
-                    count++;
+                if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) 
+                {
+                    if (!list_contains_Ejercicio(Ejercicios_asignados, ejercicio))
+                    {
+                        list_pushBack(Dia->ejercicios, ejercicio);
+                        list_pushBack(Ejercicios_asignados, ejercicio);
+                        count++;
+                    }
                 }
             }
         }
@@ -234,13 +277,17 @@ void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento
                 if (strcmp((char*)p->key, preferencia) == 0) continue;
                 for (Ejercicio* ejercicio = list_first((List*)p->value); ejercicio != NULL && count < ejercicios_diarios; ejercicio = list_next((List*)p->value)) {
                     if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) {
-                        list_pushBack(dia->ejercicios, ejercicio);
-                        count++;
+                        if (!list_contains_Ejercicio(Ejercicios_asignados, ejercicio))
+                        {
+                            list_pushBack(Dia->ejercicios, ejercicio);
+                            list_pushBack(Ejercicios_asignados, ejercicio);
+                            count++;
+                        }
                     }
                 }
             }
         }
-        map_insert(usuario->Rutina_Usuario, dia->dia, dia);
+        map_insert(usuario->Rutina_Usuario, Dia->dia, Dia);
     }
     puts("¡Rutina semanal generada exitosamente!");
 }
@@ -252,7 +299,7 @@ void MostrarRutina(Usuario* usuario) {
     }
 
     puts("===== Rutina semanal =====");
-    const char* dias_semana[] = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+    const char* dias_semana[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
     for (int i = 0; i < 7; i++) {
         MapPair* pair = map_search(usuario->Rutina_Usuario, (void*)dias_semana[i]);
         if (!pair || !pair->value) continue;
@@ -394,8 +441,10 @@ int main() {
     Usuario usuario;
     Map *Ejercicios_PorEquipamiento = map_create(is_equal_str);
     Map *Ejercicios_PorTipo = map_create(is_equal_str);
+    List *Ejercicios_asignados = list_create(); // Lista para almacenar los ejercicios asignados a la rutina para evitar duplicados en la semana
     List *Equipamiento_Total = list_create(); // Lista para almacenar el equipamiento total disponible
     List *Equipamiento_Usuario = list_create(); // Lista para almacenar el equipamiento del usuario
+    list_pushBack(Equipamiento_Usuario, "Ninguno"); // Agrega un equipamiento por defecto
 
     LeerEjercicios(Ejercicios_PorEquipamiento, Ejercicios_PorTipo, Equipamiento_Total); // Carga los ejercicios desde el archivo CSV
 
@@ -411,12 +460,13 @@ int main() {
     int opcion;
     do {
         mostrarmenu();
-        printf("Seleccione una opción: ");
+        printf("Seleccione una opcion: ");
         scanf("%d", &opcion);
 
         switch (opcion) {
             case 1:
-                GenerarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario); // Generar rutina de entrenamiento
+                list_clean(Ejercicios_asignados); // Limpia la lista de ejercicios asignados
+                GenerarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario, Ejercicios_asignados); // Generar rutina de entrenamiento
                 puts("Rutina generada. Puedes ver o modificar tu rutina en las opciones.");
 
                 break;
