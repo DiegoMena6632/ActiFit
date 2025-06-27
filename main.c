@@ -54,6 +54,10 @@ int is_equal_str(void *key1, void *key2) {
 }
 //---------------------------------------------------------------------
 
+//---------------------------------------------------------------------
+// Esta función verifica si un equipamiento ya está en la lista Equipamiento_Total.
+// Devuelve true si el equipamiento no está en la lista, false si ya está.
+//---------------------------------------------------------------------
 bool not_in(char *equip, List* Equipamiento_Total)
 {
     for(char *item = list_first(Equipamiento_Total); item != NULL; item = list_next(Equipamiento_Total)) {
@@ -202,6 +206,10 @@ void LeerDatosUsuario(Usuario* usuario) {
     printf("Tu IMC es: %d\n", usuario->IMC);
 }
 
+//---------------------------------------------------------------------
+// Esta función verifica si el usuario tiene el equipamiento necesario para realizar un ejercicio.
+// Devuelve 1 si tiene todo el equipamiento necesario, 0 si no lo tiene
+//---------------------------------------------------------------------
 int usuario_tiene_equipamiento(List* Equipamiento_Usuario, List* Equipamiento_Necesario) {
     // Si el ejercicio no requiere equipamiento, siempre puede hacerlo
     if (list_first(Equipamiento_Necesario) == NULL) return 1;
@@ -210,12 +218,14 @@ int usuario_tiene_equipamiento(List* Equipamiento_Usuario, List* Equipamiento_Ne
     for (char* equip = list_first(Equipamiento_Necesario); equip != NULL; equip = list_next(Equipamiento_Necesario)) {
         int encontrado = 0;
         for (char* user_equip = list_first(Equipamiento_Usuario); user_equip != NULL; user_equip = list_next(Equipamiento_Usuario)) {
-            if (strcmp(equip, "Ninguno") == 0 || strcmp(equip, user_equip) == 0) {
+            if (strcmp(equip, "Ninguno") == 0 || strcmp(equip, user_equip) == 0)//Busca si el usuario tiene el eqipamiento necesario
+            {
                 encontrado = 1;
                 break;
             }
         }
-        if (!encontrado) {
+        if (!encontrado) // Si no se encontró el equipamiento necesario
+        {
             tiene_todo = 0;
             break;
         }
@@ -223,6 +233,10 @@ int usuario_tiene_equipamiento(List* Equipamiento_Usuario, List* Equipamiento_Ne
     return tiene_todo;
 }
 
+//---------------------------------------------------------------------
+// Esta función verifica si un ejercicio ya está en la lista Ejercicios_asignados.
+// Devuelve true si el ejercicio ya está en la lista, false si no lo está.
+//---------------------------------------------------------------------
 bool list_contains_Ejercicio(List* Ejercicios_asignados, Ejercicio* ejercicio) {
     for (Ejercicio* e = list_first(Ejercicios_asignados); e != NULL; e = list_next(Ejercicios_asignados)) {
         if (strcmp(e->nombre, ejercicio->nombre) == 0) {
@@ -232,6 +246,12 @@ bool list_contains_Ejercicio(List* Ejercicios_asignados, Ejercicio* ejercicio) {
     return false; // El ejercicio no está en la lista
 }
 
+//---------------------------------------------------------------------
+// Esta función genera una rutina semanal personalizada para el usuario.
+// Toma en cuenta las preferencias del usuario, su IMC y el equipamiento disponible.
+// Para generar la rutina, se priorizan los ejercicios del tipo preferido del usuario.
+// Si no hay suficientes ejercicios del tipo preferido, se buscan en otros tipos.
+//---------------------------------------------------------------------
 void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario, List* Ejercicios_asignados) {
     char preferencia[32];
 
@@ -295,6 +315,10 @@ void GenerarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento
 
 }
 
+//---------------------------------------------------------------------
+// Esta función muestra la rutina semanal del usuario.
+// Recorre los días de la semana y muestra los ejercicios asignados a cada día.
+//---------------------------------------------------------------------
 void MostrarRutina(Usuario* usuario) {
     if (usuario->Rutina_Usuario == NULL) {
         puts("No tienes una rutina generada aún.");
@@ -317,6 +341,11 @@ void MostrarRutina(Usuario* usuario) {
     puts("==========================");
 }
 
+//---------------------------------------------------------------------
+// Esta función gestiona el equipamiento del usuario.
+// Permite agregar o eliminar equipamiento de la lista del usuario.
+// Si el usuario intenta agregar un equipamiento que ya posee, se le informa.
+//---------------------------------------------------------------------
 void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
     if (Equipamiento_Usuario == NULL) {
         puts("Error: La lista de equipamiento no está inicializada.");
@@ -420,6 +449,10 @@ void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
     } while (opcion != 3);
 }
 
+//---------------------------------------------------------------------
+// Esta función permite al usuario modificar un ejercicio en su rutina semanal.
+// Permite seleccionar un día de la semana y un ejercicio específico para reemplazarlo por otro compatible.
+//---------------------------------------------------------------------
 void ModificarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario) {
     if (usuario->Rutina_Usuario == NULL) {
         puts("No tienes una rutina generada aún.");
@@ -527,6 +560,9 @@ void ModificarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamien
     }
 }
 
+//---------------------------------------------------------------------
+// Esta función muestra un resumen semanal de la rutina del usuario.
+//---------------------------------------------------------------------
 void MostrarResumenSemanal(Usuario* usuario) {
     if (usuario->Rutina_Usuario == NULL) {
         puts("No tienes una rutina generada aún.");
@@ -573,6 +609,9 @@ void mostrarmenu()
     puts("=============================================");
 }
 
+//---------------------------------------------------------------------
+// Esta función libera toda la memoria utilizada por el programa al finalizar.
+//---------------------------------------------------------------------
 void LiberarMemoria(Usuario* usuario, Map* Ejercicios_PorTipo, Map* Ejercicios_PorEquipamiento,List* Equipamiento_Total, List* Equipamiento_Usuario, List* Ejercicios_asignados)
 {
     // --------------------------------------------------------------
