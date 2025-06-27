@@ -420,6 +420,142 @@ void gestionarEquipamiento(Usuario* usuario, List* Equipamiento_Usuario) {
     } while (opcion != 3);
 }
 
+void ModificarRutina(Usuario* usuario, Map* Ejercicios_PorTipo, List* Equipamiento_Usuario) {
+    if (usuario->Rutina_Usuario == NULL) {
+        puts("No tienes una rutina generada aún.");
+        return;
+    }
+
+    const char* dias_semana[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
+    puts("¿De qué día deseas modificar un ejercicio?");
+    for (int i = 0; i < 7; i++) {
+        printf("%d. %s\n", i + 1, dias_semana[i]);
+    }
+    int dia_opcion;
+    printf("Seleccione el número del día: ");
+    scanf("%d", &dia_opcion);
+    if (dia_opcion < 1 || dia_opcion > 7) {
+        puts("Opción de día no válida.");
+        return;
+    }
+
+    MapPair* pair = map_search(usuario->Rutina_Usuario, (void*)dias_semana[dia_opcion - 1]);
+    if (!pair || !pair->value) {
+        puts("No hay ejercicios asignados para ese día.");
+        return;
+    }
+    RutinaDia* dia = (RutinaDia*)pair->value;
+
+    int total_ejercicios = list_size(dia->ejercicios);
+    if (total_ejercicios == 0) {
+        puts("No hay ejercicios para modificar en este día.");
+        return;
+    }
+
+    puts("Ejercicios asignados:");
+    int idx = 1;
+    for (Ejercicio* ejercicio = list_first(dia->ejercicios); ejercicio != NULL; ejercicio = list_next(dia->ejercicios)) {
+        printf("%d. %s (%s)\n", idx++, ejercicio->nombre, ejercicio->tipo);
+    }
+    int ejercicio_opcion;
+    printf("Seleccione el número del ejercicio a reemplazar: ");
+    scanf("%d", &ejercicio_opcion);
+    if (ejercicio_opcion < 1 || ejercicio_opcion > total_ejercicios) {
+        puts("Opción de ejercicio no válida.");
+        return;
+    }
+
+    // Obtener preferencia del usuario
+    char preferencia[32];
+    printf("¿Qué tipo de ejercicio prefieres para el reemplazo? (Cardio/Fuerza/Core): ");
+    scanf("%s", preferencia);
+
+    // Mostrar ejercicios compatibles
+    MapPair* tipo_pair = map_search(Ejercicios_PorTipo, preferencia);
+    if (!tipo_pair) {
+        puts("No hay ejercicios de ese tipo.");
+        return;
+    }
+
+    List* lista_tipo = (List*)tipo_pair->value;
+    int compatibles = 0, comp_idx = 1;
+    Ejercicio* compatibles_arr[100]; // Máximo 100 compatibles para mostrar
+
+    puts("Ejercicios compatibles disponibles:");
+    for (Ejercicio* ejercicio = list_first(lista_tipo); ejercicio != NULL; ejercicio = list_next(lista_tipo)) {
+        // Verifica equipamiento
+        if (usuario_tiene_equipamiento(Equipamiento_Usuario, ejercicio->Equipamiento_Necesario)) {
+            // Evita duplicados en el mismo día
+            int ya_en_dia = 0;
+            for (Ejercicio* e = list_first(dia->ejercicios); e != NULL; e = list_next(dia->ejercicios)) {
+                if (strcmp(e->nombre, ejercicio->nombre) == 0) {
+                    ya_en_dia = 1;
+                    break;
+                }
+            }
+            if (!ya_en_dia) {
+                printf("%d. %s (%d min)\n", comp_idx, ejercicio->nombre, ejercicio->duracion);
+                compatibles_arr[comp_idx - 1] = ejercicio;
+                compatibles++;
+                comp_idx++;
+            }
+        }
+    }
+    if (compatibles == 0) {
+        puts("No hay ejercicios compatibles disponibles para reemplazar.");
+        return;
+    }
+
+    int nuevo_opcion;
+    printf("Seleccione el número del nuevo ejercicio: ");
+    scanf("%d", &nuevo_opcion);
+    if (nuevo_opcion < 1 || nuevo_opcion > compatibles) {
+        puts("Opción no válida.");
+        return;
+    }
+
+    // Reemplazar el ejercicio
+    int curr_idx = 1;
+    for (Ejercicio* ejercicio = list_first(dia->ejercicios); ejercicio != NULL; ejercicio = list_next(dia->ejercicios)) {
+        if (curr_idx == ejercicio_opcion) {
+            list_popCurrent(dia->ejercicios); // Elimina el ejercicio actual
+            list_pushBack(dia->ejercicios, compatibles_arr[nuevo_opcion - 1]); // Agrega el nuevo ejercicio
+            puts("Ejercicio reemplazado exitosamente.");
+            return;
+        }
+        curr_idx++;
+    }
+}
+
+void MostrarResumenSemanal(Usuario* usuario) {
+    if (usuario->Rutina_Usuario == NULL) {
+        puts("No tienes una rutina generada aún.");
+        return;
+    }
+
+    const char* dias_semana[] = {"Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"};
+    int total_ejercicios = 0;
+    int total_tiempo = 0;
+    int total_calorias = 0;
+
+    for (int i = 0; i < 7; i++) {
+        MapPair* pair = map_search(usuario->Rutina_Usuario, (void*)dias_semana[i]);
+        if (!pair || !pair->value) continue;
+        RutinaDia* dia = (RutinaDia*)pair->value;
+        for (Ejercicio* ejercicio = list_first(dia->ejercicios); ejercicio != NULL; ejercicio = list_next(dia->ejercicios)) {
+            total_ejercicios++;
+            total_tiempo += ejercicio->duracion;
+            total_calorias += ejercicio->calorias;
+        }
+    }
+
+    puts("===== Resumen semanal de tu rutina =====");
+    printf("Total de ejercicios realizados: %d\n", total_ejercicios);
+    printf("Tiempo total realizando ejercicios: %d minutos\n", total_tiempo);
+    printf("Calorías quemadas aproximadas: %d kcal\n", total_calorias);
+    puts("========================================");
+}
+
 //---------------------------------------------------------------------
 // Esta funcion muestra un menú de opciones al usuario.
 // El menú incluye opciones para generar una rutina de entrenamiento,
@@ -495,10 +631,13 @@ int main() {
                 MostrarRutina(&usuario); // Mostrar la rutina generada
                 break;
             case 4:
-                // ModificarRutina(&usuario, Ejercicios_PorEquipamiento, Ejercicios_PorTipo); // Esta funcion deberia permitir modificar la rutina del usuario
+                puts("Vamos a modificar tu rutina de entrenamiento.");
+                ModificarRutina(&usuario, Ejercicios_PorTipo, Equipamiento_Usuario); // Modificar la rutina generada
+                puts("Rutina modificada. Puedes volver a mostrarla o modificarla nuevamente.");
                 break;
             case 5:
-                // VerResumenRutina(&usuario); // Esta funcion deberia mostrar un resumen de la rutina semanal del usuario
+                MostrarResumenSemanal(&usuario); // Mostrar un resumen de la rutina semanal
+                puts("Este resumen te ayudará a ver tu progreso y ajustar tu rutina si es necesario.");
                 break;
             case 6:
                 puts("Saliendo de la aplicacion. ¡Hasta luego!");
