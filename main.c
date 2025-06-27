@@ -573,6 +573,107 @@ void mostrarmenu()
     puts("=============================================");
 }
 
+void LiberarMemoria(Usuario* usuario, Map* Ejercicios_PorTipo, Map* Ejercicios_PorEquipamiento,List* Equipamiento_Total, List* Equipamiento_Usuario, List* Ejercicios_asignados)
+{
+    // --------------------------------------------------------------
+    // 1. Liberar los ejercicios en Ejercicios_PorTipo (una sola vez)
+    // --------------------------------------------------------------
+    // Cada ejercicio puede estar en múltiples listas, pero solo debe liberarse una vez.
+    MapPair* tipo_pair = map_first(Ejercicios_PorTipo);
+    while (tipo_pair != NULL) {
+        List* lista = tipo_pair->value;
+
+        Ejercicio* e = list_first(lista);
+        while (e != NULL) {
+            // Liberar todos los strings del equipamiento necesario
+            for (char* equip = list_first(e->Equipamiento_Necesario); equip != NULL; equip = list_next(e->Equipamiento_Necesario)) {
+                free(equip); // strdup de cada item
+            }
+
+            // Limpiar y liberar la lista de equipamiento del ejercicio
+            list_clean(e->Equipamiento_Necesario);
+            free(e->Equipamiento_Necesario);
+
+            // Finalmente, liberar el ejercicio completo
+            free(e);
+            e = list_next(lista);
+        }
+
+        // Limpiar y liberar la lista del tipo
+        list_clean(lista);
+        free(lista);
+
+        tipo_pair = map_next(Ejercicios_PorTipo);
+    }
+
+    // Limpiar y liberar el mapa completo de ejercicios por tipo
+    map_clean(Ejercicios_PorTipo);
+    free(Ejercicios_PorTipo);
+
+    // ---------------------------------------------------------------------
+    // 2. Liberar las listas en Ejercicios_PorEquipamiento (sin liberar ejercicios)
+    // ---------------------------------------------------------------------
+    // Ya que los ejercicios fueron liberados en el paso anterior, aquí solo liberamos las listas.
+    MapPair* equip_pair = map_first(Ejercicios_PorEquipamiento);
+    while (equip_pair != NULL) {
+        List* lista = equip_pair->value;
+        list_clean(lista);
+        free(lista);
+        equip_pair = map_next(Ejercicios_PorEquipamiento);
+    }
+
+    map_clean(Ejercicios_PorEquipamiento);
+    free(Ejercicios_PorEquipamiento);
+
+    // --------------------------------------------------------------
+    // 3. Liberar Equipamiento_Total (strings creados con strdup)
+    // --------------------------------------------------------------
+    for (char* equip = list_first(Equipamiento_Total); equip != NULL; equip = list_next(Equipamiento_Total)) {
+        free(equip);
+    }
+    list_clean(Equipamiento_Total);
+    free(Equipamiento_Total);
+
+    // --------------------------------------------------------------
+    // 4. Liberar Equipamiento_Usuario (también con strdup)
+    // --------------------------------------------------------------
+    for (char* equip = list_first(Equipamiento_Usuario); equip != NULL; equip = list_next(Equipamiento_Usuario)) {
+        free(equip);
+    }
+    list_clean(Equipamiento_Usuario);
+    free(Equipamiento_Usuario);
+
+    // --------------------------------------------------------------
+    // 5. Liberar lista de Ejercicios_asignados (sin liberar los ejercicios)
+    // --------------------------------------------------------------
+    // Solo liberamos la lista porque los ejercicios ya fueron liberados anteriormente.
+    list_clean(Ejercicios_asignados);
+    free(Ejercicios_asignados);
+
+    // --------------------------------------------------------------
+    // 6. Liberar la rutina generada por el usuario (Rutina_Usuario)
+    // --------------------------------------------------------------
+    if (usuario->Rutina_Usuario != NULL) {
+        MapPair* rutina_pair = map_first(usuario->Rutina_Usuario);
+        while (rutina_pair != NULL) {
+            RutinaDia* dia = rutina_pair->value;
+
+            // Limpiar la lista de ejercicios del día (sin liberar los ejercicios en sí)
+            list_clean(dia->ejercicios);
+            free(dia->ejercicios);
+
+            // Liberar la estructura del día
+            free(dia);
+
+            rutina_pair = map_next(usuario->Rutina_Usuario);
+        }
+
+        // Limpiar y liberar el mapa de rutina
+        map_clean(usuario->Rutina_Usuario);
+        free(usuario->Rutina_Usuario);
+    }
+}
+
 //=========================================================================
 // Main
 //==========================================================================
@@ -646,6 +747,8 @@ int main() {
                 puts("Opción no valida. Por favor, intente de nuevo.");
         }
     } while (opcion != 6);
-    
+
+    // Liberar memoria
+    LiberarMemoria(&usuario, Ejercicios_PorTipo, Ejercicios_PorEquipamiento, Equipamiento_Total, Equipamiento_Usuario, Ejercicios_asignados);
     return 0;
 }
